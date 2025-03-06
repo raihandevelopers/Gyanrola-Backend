@@ -12,6 +12,7 @@ app.use(express.json());
 const allowedOrigins = [
   "https://quiz-admin-fe.vercel.app", // Production frontend
   "http://localhost:5000", // Local development frontend
+  "https://quiz-contest-gamma.vercel.app/", // Production frontend
 ];
 
 app.use(
