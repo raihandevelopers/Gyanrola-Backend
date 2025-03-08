@@ -15,14 +15,19 @@ exports.submitScore = async (req, res) => {
     // Calculate the score
     let score = 0;
     const userResponses = selectedOptions.map((userOption) => {
-      const question = quiz.questions.find((q) => q._id.equals(userOption.questionId));
+      console.log(userOption, quiz.questions);
+      const question = quiz.questions.find((q) =>
+        q._id.equals(userOption.questionId)
+      );
       if (!question) {
         throw new Error(`Question with ID ${userOption.questionId} not found`);
       }
 
       // Check if the selected answer is correct
       if (userOption.selectedAnswer === question.correctAnswer) {
-        score += 1; // Increment score for each correct answer
+        score += 4; // Increment score for each correct answer
+      } else {
+        score -= 1; // Decrement score for each wrong answer
       }
 
       return {
@@ -44,7 +49,7 @@ exports.submitScore = async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-};// Get Scores for a Quiz
+}; // Get Scores for a Quiz
 exports.getScoresForQuiz = async (req, res) => {
   const { quizId } = req.params;
   try {
@@ -57,6 +62,7 @@ exports.getScoresForQuiz = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
 // Declare Winner (Admin Only)
 exports.declareWinner = async (req, res) => {
   const { scoreId } = req.body;
