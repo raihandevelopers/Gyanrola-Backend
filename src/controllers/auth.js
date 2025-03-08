@@ -4,7 +4,7 @@ const User = require("../models/User");
 
 // Register
 exports.register = async (req, res) => {
-  const { name, email, password } = req.body; // Add name to the request body
+  const { name, email, password, refer_code } = req.body; // Add name to the request body
   try {
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -15,8 +15,27 @@ exports.register = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Check if refer_code is valid
+    let referredBy = null;
+    if (refer_code) {
+      try {
+        const referrer = await User.findOne({ _id: refer_code });
+        if (!referrer) {
+          return res.status(400).json({ error: "Invalid referral code" });
+        }
+        referredBy = referrer._id;
+      } catch (error) {
+        return res.status(400).json({ error: "Invalid referral code" });
+      }
+    }
+
     // Create user (default role is "user")
-    const user = new User({ name, email, password: hashedPassword }); // Include name
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      referredBy,
+    }); // Include referredBy
     await user.save();
 
     const token = jwt.sign(

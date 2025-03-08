@@ -15,7 +15,6 @@ exports.submitScore = async (req, res) => {
     // Calculate the score
     let score = 0;
     const userResponses = selectedOptions.map((userOption) => {
-      console.log(userOption, quiz.questions);
       const question = quiz.questions.find((q) =>
         q._id.equals(userOption.questionId)
       );
