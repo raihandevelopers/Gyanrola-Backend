@@ -117,4 +117,10 @@ const updateQuiz = async (req, res) => {
 };
 
 // Export all functions
-module.exports = { createQuiz, getQuizzes, deleteQuiz, getQuizById, updateQuiz };
+module.exports = {
+  createQuiz,
+  getQuizzes,
+  deleteQuiz,
+  getQuizById,
+  updateQuiz,
+};
