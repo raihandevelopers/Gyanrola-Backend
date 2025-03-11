@@ -14,6 +14,8 @@ const allowedOrigins = [
   "http://localhost:5000", // Local development frontend
   "https://quiz-contest-gamma.vercel.app", // Production frontend V2
   "http://localhost:5173",
+  "https://quiz-admin-fe-nj3j.vercel.app",
+  "https://quiz-user-frontend.vercel.app",
 ];
 
 app.use(
