@@ -16,6 +16,7 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://quiz-admin-fe-nj3j.vercel.app",
   "https://quiz-user-frontend.vercel.app",
+  "https://playquizcontest.com",
 ];
 
 app.use(
