@@ -75,7 +75,7 @@ exports.login = async (req, res) => {
 exports.getUsers = async (req, res) => {
   try {
     // Fetch all users (only email and name)
-    const users = await User.find({}, { email: 1, name: 1, _id: 0 }); // Only include email and name
+    const users = await User.find({}, { email: 1, name: 1, wallet: 1, _id: 0 });
     res.json(users);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -96,22 +96,26 @@ exports.getUser = async (req, res) => {
 exports.redeem = async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
     const { amount } = req.body;
+
+    // Check if the user has sufficient balance
+    const user = await User.findById(userId);
     if (user.wallet < amount) {
       return res.status(400).json({ error: "Insufficient funds" });
     }
+
+    // Check minimum redemption value
     if (amount < minimum_redemption_value) {
       return res.status(400).json({
         error: `Minimum redemption value is ${minimum_redemption_value}`,
       });
     }
-    // Deduct the amount from the wallet (TODO: Add Payment Gateway Integration here)
-    user.wallet -= amount;
-    await user.save();
-    res.json({ message: "Redemption successful", wallet: user.wallet });
+
+    // Create a withdrawal request
+    const withdrawal = new Withdrawal({ userId, amount });
+    await withdrawal.save();
+
+    res.json({ message: "Withdrawal request submitted", withdrawal });
   } catch (error) {
     res.status(500).json({ error: "Server error" });
   }

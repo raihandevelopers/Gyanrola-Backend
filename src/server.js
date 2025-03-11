@@ -13,6 +13,7 @@ const allowedOrigins = [
   "https://quiz-admin-fe.vercel.app", // Production frontend
   "http://localhost:5000", // Local development frontend
   "https://quiz-contest-gamma.vercel.app", // Production frontend V2
+  "http://localhost:5173",
 ];
 
 app.use(
@@ -49,6 +50,7 @@ app.use("/api/quiz", require("./routes/quiz"));
 app.use("/api/score", require("./routes/score"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/category", require("./routes/category"));
+app.use("/api/withdrawals", require("./routes/withdrawal"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
