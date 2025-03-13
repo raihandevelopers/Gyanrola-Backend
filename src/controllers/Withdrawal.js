@@ -5,7 +5,11 @@ const User = require("../models/User");
 exports.requestWithdrawal = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { amount } = req.body;
+    const { amount, upi } = req.body;
+
+    if (!upi) {
+      return res.status(400).json({ error: "UPI is required" });
+    }
 
     // Check if the user has sufficient balance
     const user = await User.findById(userId);
@@ -14,10 +18,12 @@ exports.requestWithdrawal = async (req, res) => {
     }
 
     // Create a withdrawal request
-    const withdrawal = new Withdrawal({ userId, amount });
+    const withdrawal = new Withdrawal({ userId, amount, upi });
     await withdrawal.save();
 
-    res.status(201).json({ message: "Withdrawal request submitted", withdrawal });
+    res
+      .status(201)
+      .json({ message: "Withdrawal request submitted", withdrawal });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
@@ -50,7 +56,9 @@ exports.acceptWithdrawal = async (req, res) => {
 
     // Check if the request is already processed
     if (withdrawal.status !== "pending") {
-      return res.status(400).json({ error: "Withdrawal request already processed" });
+      return res
+        .status(400)
+        .json({ error: "Withdrawal request already processed" });
     }
 
     // Deduct the amount from the user's wallet
@@ -84,7 +92,9 @@ exports.rejectWithdrawal = async (req, res) => {
 
     // Check if the request is already processed
     if (withdrawal.status !== "pending") {
-      return res.status(400).json({ error: "Withdrawal request already processed" });
+      return res
+        .status(400)
+        .json({ error: "Withdrawal request already processed" });
     }
 
     // Update the withdrawal status
