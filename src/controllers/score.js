@@ -54,7 +54,7 @@ exports.getScoresForQuiz = async (req, res) => {
   try {
     const scores = await Score.find({ quiz: quizId })
       .populate("user", "name email")
-      .sort({ score: -1 });
+      .sort({ isWinner: -1, score: -1 });
 
     res.json(scores);
   } catch (err) {
