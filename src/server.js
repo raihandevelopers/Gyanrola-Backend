@@ -56,6 +56,7 @@ app.use("/api/score", require("./routes/score"));
 app.use("/api/admin", require("./routes/admin"));
 app.use("/api/category", require("./routes/category"));
 app.use("/api/withdrawals", require("./routes/withdrawal"));
+app.use("/api/ebooks", require("./routes/ebooks"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
