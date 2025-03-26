@@ -13,6 +13,7 @@ const quizSchema = new mongoose.Schema({
     },
   ],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  isFree: { type: Boolean, default: false } // Added field with default false (paid)
 });
 
 module.exports = mongoose.model("Quiz", quizSchema);

@@ -7,9 +7,13 @@ const {
   uploadEbook,
   downloadEbook,
   getAllEbooks,
+  getEbookById,
+  updateEbook,
+  deleteEbook
 } = require("../controllers/Ebooks");
 const authMiddleware = require("../middleware/auth");
 
+// Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/ebooks/");
@@ -35,13 +39,25 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // limiting file size to 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
 
-router.post("/upload", authMiddleware, upload.single("pdfFile"), uploadEbook);
+// Create - Upload new ebook
+router.post("/", authMiddleware, upload.single("pdfFile"), uploadEbook);
 
+// Read - Get all ebooks
+router.get("/", getAllEbooks);
+
+// Read - Get single ebook
+router.get("/:id", getEbookById);
+
+// Update - Modify existing ebook
+router.put("/:id", authMiddleware, upload.single("pdfFile"), updateEbook);
+
+// Delete - Remove ebook
+router.delete("/:id", authMiddleware, deleteEbook);
+
+// Download ebook file
 router.get("/download/:id", authMiddleware, downloadEbook);
-
-router.get("/all", getAllEbooks);
 
 module.exports = router;

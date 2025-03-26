@@ -4,7 +4,7 @@ const Subcategory = require("../models/Subcategory");
 
 // Create Quiz
 const createQuiz = async (req, res) => {
-  const { title, description, category, subcategory, questions } = req.body;
+  const { title, description, category, subcategory, questions, isFree } = req.body;
 
   try {
     // Validate category
@@ -27,6 +27,7 @@ const createQuiz = async (req, res) => {
       subcategory,
       questions,
       createdBy: req.user.id,
+      isFree: isFree || false // Default to false if not provided
     });
 
     await quiz.save();
@@ -40,9 +41,9 @@ const createQuiz = async (req, res) => {
 const getQuizzes = async (req, res) => {
   try {
     const quizzes = await Quiz.find()
-      .populate("category", "name") // Populate category name
-      .populate("subcategory", "name") // Populate subcategory name
-      .populate("createdBy", "email"); // Populate creator email
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("createdBy", "email");
 
     res.json(quizzes);
   } catch (err) {
@@ -54,9 +55,9 @@ const getQuizzes = async (req, res) => {
 const getQuizById = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id)
-      .populate("category", "name") // Populate category name
-      .populate("subcategory", "name") // Populate subcategory name
-      .populate("createdBy", "email"); // Populate creator email
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("createdBy", "email");
 
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
@@ -71,7 +72,7 @@ const getQuizById = async (req, res) => {
 // Delete Quiz
 const deleteQuiz = async (req, res) => {
   try {
-    const quiz = await Quiz.findByIdAndDelete(req.params.id); // Find and delete the quiz by ID
+    const quiz = await Quiz.findByIdAndDelete(req.params.id);
     if (!quiz) {
       return res.status(404).json({ error: "Quiz not found" });
     }
@@ -83,8 +84,8 @@ const deleteQuiz = async (req, res) => {
 
 // Update Quiz
 const updateQuiz = async (req, res) => {
-  const { id } = req.params; // Quiz ID
-  const { title, description, category, subcategory, questions } = req.body;
+  const { id } = req.params;
+  const { title, description, category, subcategory, questions, isFree } = req.body;
 
   try {
     // Validate category
@@ -102,8 +103,15 @@ const updateQuiz = async (req, res) => {
     // Find and update the quiz
     const quiz = await Quiz.findByIdAndUpdate(
       id,
-      { title, description, category, subcategory, questions },
-      { new: true } // Return the updated quiz
+      { 
+        title, 
+        description, 
+        category, 
+        subcategory, 
+        questions,
+        isFree: isFree || false // Default to false if not provided
+      },
+      { new: true }
     );
 
     if (!quiz) {
@@ -116,7 +124,6 @@ const updateQuiz = async (req, res) => {
   }
 };
 
-// Export all functions
 module.exports = {
   createQuiz,
   getQuizzes,
