@@ -1,14 +1,14 @@
 const Ebook = require("../models/Ebooks");
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Upload new ebook
 exports.uploadEbook = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: "No file uploaded or invalid file type" 
+        message: "No file uploaded or invalid file type",
       });
     }
 
@@ -29,25 +29,24 @@ exports.uploadEbook = async (req, res) => {
       description,
       price,
       category,
-      filepath: req.file.path,
+      filepath: req.file.path.replace(/\\/g, "/"), // Normalize file path for cross-platform compatibility
     });
 
     await newEbook.save();
-    
+
     res.status(201).json({
       success: true,
       message: "Ebook uploaded successfully",
-      data: newEbook
+      data: newEbook,
     });
-    
   } catch (error) {
     // Clean up uploaded file if error occurs
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message,
     });
   }
 };
@@ -56,17 +55,16 @@ exports.uploadEbook = async (req, res) => {
 exports.getAllEbooks = async (req, res) => {
   try {
     const ebooks = await Ebook.find().select("-filepath").populate("category");
-    
+
     res.status(200).json({
       success: true,
       count: ebooks.length,
-      data: ebooks
+      data: ebooks,
     });
-    
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message,
     });
   }
 };
@@ -77,23 +75,22 @@ exports.getEbookById = async (req, res) => {
     const ebook = await Ebook.findById(req.params.id)
       .select("-filepath")
       .populate("category");
-      
+
     if (!ebook) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Ebook not found" 
+        message: "Ebook not found",
       });
     }
-    
+
     res.status(200).json({
       success: true,
-      data: ebook
+      data: ebook,
     });
-    
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message,
     });
   }
 };
@@ -109,9 +106,9 @@ exports.updateEbook = async (req, res) => {
       // Get current file path before updating
       const ebook = await Ebook.findById(req.params.id);
       oldFilePath = ebook.filepath;
-      
+
       // Add new file path to update data
-      updateData.filepath = req.file.path;
+      updateData.filepath = req.file.path.replace(/\\/g, "/"); // Normalize file path for cross-platform compatibility
     }
 
     const updatedEbook = await Ebook.findByIdAndUpdate(
@@ -124,9 +121,9 @@ exports.updateEbook = async (req, res) => {
       if (req.file) {
         fs.unlinkSync(req.file.path);
       }
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Ebook not found" 
+        message: "Ebook not found",
       });
     }
 
@@ -138,16 +135,15 @@ exports.updateEbook = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Ebook updated successfully",
-      data: updatedEbook
+      data: updatedEbook,
     });
-    
   } catch (error) {
     if (req.file) {
       fs.unlinkSync(req.file.path);
     }
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message,
     });
   }
 };
@@ -156,28 +152,28 @@ exports.updateEbook = async (req, res) => {
 exports.deleteEbook = async (req, res) => {
   try {
     const ebook = await Ebook.findByIdAndDelete(req.params.id);
-    
+
     if (!ebook) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Ebook not found" 
+        message: "Ebook not found",
       });
     }
 
     // Delete the associated file
-    if (fs.existsSync(ebook.filepath)) {
-      fs.unlinkSync(ebook.filepath);
+    const filePath = path.resolve(ebook.filepath); // Converts to OS-specific format
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
     }
 
     res.status(200).json({
       success: true,
-      message: "Ebook deleted successfully"
+      message: "Ebook deleted successfully",
     });
-    
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message,
     });
   }
 };
@@ -186,31 +182,31 @@ exports.deleteEbook = async (req, res) => {
 exports.downloadEbook = async (req, res) => {
   try {
     const ebook = await Ebook.findById(req.params.id);
-    
+
     if (!ebook) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Ebook not found" 
+        message: "Ebook not found",
       });
     }
 
-    if (!fs.existsSync(ebook.filepath)) {
-      return res.status(404).json({ 
+    const filePath = path.resolve(ebook.filepath); // Converts to OS-specific format
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
         success: false,
-        message: "File not found" 
+        message: "File not found",
       });
     }
 
-    res.download(ebook.filepath, `${ebook.name}.pdf`, (err) => {
+    res.download(filePath, `${ebook.name}.pdf`, (err) => {
       if (err) {
         console.error("Download error:", err);
       }
     });
-    
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      message: error.message 
+      message: error.message,
     });
   }
 };
