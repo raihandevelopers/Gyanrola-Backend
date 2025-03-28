@@ -57,6 +57,7 @@ app.use("/api/admin", require("./routes/admin"));
 app.use("/api/category", require("./routes/category"));
 app.use("/api/withdrawals", require("./routes/withdrawal"));
 app.use("/api/ebooks", require("./routes/ebooks"));
+app.use("/api/blogs", require("./routes/blogs"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
