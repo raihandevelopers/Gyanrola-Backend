@@ -3,8 +3,18 @@ const mongoose = require("mongoose");
 const quizSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
-  category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
-  subcategory: { type: mongoose.Schema.Types.ObjectId, ref: "Subcategory", required: true },
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Category",
+    required: true,
+  },
+  subcategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subcategory",
+    required: true,
+  },
+  startDate: { type: Date, required: true },
+  endDate: { type: Date, required: true },
   questions: [
     {
       question: { type: String, required: true },
@@ -12,8 +22,12 @@ const quizSchema = new mongoose.Schema({
       correctAnswer: { type: String, required: true },
     },
   ],
-  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  isFree: { type: Boolean, default: false } // Added field with default false (paid)
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  isFree: { type: Boolean, default: false }, // Added field with default false (paid)
 });
 
 module.exports = mongoose.model("Quiz", quizSchema);

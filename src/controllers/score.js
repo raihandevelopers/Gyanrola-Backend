@@ -12,6 +12,16 @@ exports.submitScore = async (req, res) => {
       return res.status(404).json({ error: "Quiz not found" });
     }
 
+    const currentDate = new Date().toISOString();
+    // Check if the quiz is active
+    if (quiz.startDate > currentDate) {
+      return res.status(400).json({ error: "Quiz is not active" });
+    }
+
+    if (quiz.endDate < currentDate) {
+      return res.status(400).json({ error: "Quiz has already ended" });
+    }
+
     // Calculate the score
     let score = 0;
     const userResponses = selectedOptions.map((userOption) => {

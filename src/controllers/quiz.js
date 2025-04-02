@@ -4,7 +4,16 @@ const Subcategory = require("../models/Subcategory");
 
 // Create Quiz
 const createQuiz = async (req, res) => {
-  const { title, description, category, subcategory, questions, isFree } = req.body;
+  const {
+    title,
+    description,
+    category,
+    subcategory,
+    questions,
+    isFree,
+    startDate,
+    endDate,
+  } = req.body;
 
   try {
     // Validate category
@@ -25,9 +34,11 @@ const createQuiz = async (req, res) => {
       description,
       category,
       subcategory,
+      startDate,
+      endDate,
       questions,
       createdBy: req.user.id,
-      isFree: isFree || false // Default to false if not provided
+      isFree: isFree || false, // Default to false if not provided
     });
 
     await quiz.save();
@@ -85,7 +96,16 @@ const deleteQuiz = async (req, res) => {
 // Update Quiz
 const updateQuiz = async (req, res) => {
   const { id } = req.params;
-  const { title, description, category, subcategory, questions, isFree } = req.body;
+  const {
+    title,
+    description,
+    category,
+    subcategory,
+    questions,
+    isFree,
+    startDate,
+    endDate,
+  } = req.body;
 
   try {
     // Validate category
@@ -103,13 +123,15 @@ const updateQuiz = async (req, res) => {
     // Find and update the quiz
     const quiz = await Quiz.findByIdAndUpdate(
       id,
-      { 
-        title, 
-        description, 
-        category, 
-        subcategory, 
+      {
+        title,
+        description,
+        category,
+        subcategory,
         questions,
-        isFree: isFree || false // Default to false if not provided
+        startDate,
+        endDate,
+        isFree: isFree || false, // Default to false if not provided
       },
       { new: true }
     );
