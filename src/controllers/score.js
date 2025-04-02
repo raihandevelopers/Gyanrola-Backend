@@ -79,16 +79,38 @@ exports.declareWinner = async (req, res) => {
     const score = await Score.findById(scoreId).populate("user");
     if (!score) return res.status(404).json({ error: "Score not found" });
 
+    // Check if any other score is already declared as winner
+    const existingWinner = await Score.findOne({
+      isWinner: true,
+      quiz: score.quiz,
+    });
+    if (existingWinner) {
+      return res
+        .status(400)
+        .json({ error: "A winner has already been declared for this quiz" });
+    }
+
     // Declare the user as the winner
     score.isWinner = true;
     await score.save();
 
-    // Update the user's points
-    const user = await User.findById(score.user._id);
-    user.points += 10; // Add 10 points for winning
-    await user.save();
+    res.json({ message: "Winner declared successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
 
-    res.json({ message: "Winner declared successfully", user });
+exports.removeWinner = async (req, res) => {
+  const { scoreId } = req.body;
+  try {
+    const score = await Score.findById(scoreId).populate("user");
+    if (!score) return res.status(404).json({ error: "Score not found" });
+
+    // Remove the winner status
+    score.isWinner = false;
+    await score.save();
+
+    res.json({ message: "Winner removed successfully" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
