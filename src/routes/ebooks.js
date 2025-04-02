@@ -9,7 +9,8 @@ const {
   getAllEbooks,
   getEbookById,
   updateEbook,
-  deleteEbook
+  deleteEbook,
+  getEbookCoverImage,
 } = require("../controllers/Ebooks");
 const authMiddleware = require("../middleware/auth");
 
@@ -59,5 +60,8 @@ router.delete("/:id", authMiddleware, deleteEbook);
 
 // Download ebook file
 router.get("/download/:id", authMiddleware, downloadEbook);
+
+// Get ebook cover image
+router.get("/cover/:id", getEbookCoverImage);
 
 module.exports = router;
