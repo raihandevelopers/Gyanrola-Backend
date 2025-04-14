@@ -28,6 +28,7 @@ const quizSchema = new mongoose.Schema({
     required: true,
   },
   isFree: { type: Boolean, default: false }, // Added field with default false (paid)
+  price: { type: Number, default: 0 }, // Added field for quiz price
 });
 
 module.exports = mongoose.model("Quiz", quizSchema);

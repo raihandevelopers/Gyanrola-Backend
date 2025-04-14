@@ -11,6 +11,8 @@ const {
   updateEbook,
   deleteEbook,
   getEbookCoverImage,
+  createEbookOrder,
+  verifyPayment,
 } = require("../controllers/Ebooks");
 const authMiddleware = require("../middleware/auth");
 
@@ -63,5 +65,11 @@ router.get("/download/:id", authMiddleware, downloadEbook);
 
 // Get ebook cover image
 router.get("/cover/:id", getEbookCoverImage);
+
+// Create Order for ebook
+router.post("/order", authMiddleware, createEbookOrder);
+
+// Verify Order Payment
+router.get("/verify/:id", verifyPayment);
 
 module.exports = router;

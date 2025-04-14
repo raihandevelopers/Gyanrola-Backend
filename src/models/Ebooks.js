@@ -10,7 +10,7 @@ const ebookSchema = new mongoose.Schema({
     required: true,
   },
   filepath: { type: String, required: true },
-  imagePath: { type: String, required: false },
+  imagePath: { type: String, required: true },
 });
 
 module.exports = mongoose.model("Ebook", ebookSchema);
