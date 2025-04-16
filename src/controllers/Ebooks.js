@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 const Ebook = require("../models/Ebooks");
 const Transaction = require("../models/Transaction");
 const fs = require("fs");
@@ -9,25 +7,19 @@ const axios = require("axios");
 const User = require("../models/User");
 const {
   StandardCheckoutClient,
-  Env,
   StandardCheckoutPayRequest,
 } = require("pg-sdk-node");
 const { Poppler } = require("node-poppler");
 const poppler = new Poppler();
 const { promises: fsPromises } = require("fs");
-
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
-const CLIENT_VERSION = Number(process.env.CLIENT_VERSION);
-
-const clientId = CLIENT_ID;
-const clientSecret = CLIENT_SECRET;
-const clientVersion = CLIENT_VERSION;
-const env = Env.SANDBOX;
-
-// console.log("Client ID:", CLIENT_ID);
-// console.log("Client Secret:", CLIENT_SECRET);
-// console.log("Client Version:", CLIENT_VERSION);
+const {
+  clientId,
+  clientSecret,
+  clientVersion,
+  env,
+  APP_BE_URL,
+  APP_FE_URL,
+} = require("./phonepe_credentials/credentials");
 
 const client = StandardCheckoutClient.getInstance(
   clientId,
@@ -37,14 +29,6 @@ const client = StandardCheckoutClient.getInstance(
 );
 
 const { randomUUID } = require("crypto");
-
-const PHONEPE_MERCHANT_KEY = process.env.PHONEPE_MERCHANT_KEY;
-const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX;
-const PHONEPE_BASE_URL = process.env.PHONEPE_BASE_URL;
-const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID;
-const APP_BE_URL = process.env.APP_BE_URL;
-const APP_FE_URL = process.env.APP_FE_URL;
-const PHONEPE_ENVIRONMENT = process.env.PHONEPE_ENVIRONMENT;
 
 // Function to extract the first page as an image
 const extractFirstPageAsImage = async (pdfPath) => {
@@ -398,26 +382,6 @@ exports.getEbookCoverImage = async (req, res) => {
   }
 };
 
-// // const PHONEPE_BASE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox"; // Updated to use the correct URL
-// const PHONEPE_BASE_URL = "https://api.phonepe.com/apis/hermes";
-// // const PRODUCTION_PHONEPE_BASE_URL = "https://api.phonepe.com/apis/hermes"; // Added production URL
-
-// let PHONEPE_MERCHANT_ID = "UATSB123";
-// let PHONEPE_MERCHANT_KEY = "69cd2942-0674-4b03-aeb2-8693818a4d2a";
-// let PHONEPE_CALLBACK_URL = "your_callback_url";
-// let PHONEPE_BASE_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox";
-// let PHONEPE_SALT_INDEX = 1;
-
-// // PHONEPE_MERCHANT_ID = CLIENT_MID;
-// // PHONEPE_MERCHANT_KEY = PHONEPE_MERCHANT_KEY;
-console.log("Mercant key:", PHONEPE_MERCHANT_KEY);
-
-const ENDPOINT = "/pg/v1/pay";
-
-// test = "v2"; // Set to "v2" for testing
-let expires_at = null; // Initialize token expiry variable
-let access_token = null; // Initialize access token variable
-
 // Create Ebook Order with PhonePe Integration
 exports.createEbookOrder = async (req, res) => {
   const { ebookId } = req.body;
@@ -434,126 +398,42 @@ exports.createEbookOrder = async (req, res) => {
 
     const transaction = new Transaction({
       ebookId,
-      userId: userId || null, // Null for guest users
+      userId: userId, // Null for guest users
       transactionId: `TXN_${Date.now()}`, // Generate a unique transaction ID
-      amount: ebook.price * 100, // Convert to paise
+      amount: (ebook.price && ebook.price > 1 ? ebook.price : 1) * 100, // Convert to paise (setting ebook price to rs 1, in case of price < 1)
     });
 
     await transaction.save();
 
-    if (PHONEPE_ENVIRONMENT === "PROD") {
-      try {
-        const request = StandardCheckoutPayRequest.builder()
-          .merchantOrderId(transaction.transactionId)
-          .amount(transaction.amount)
-          .redirectUrl(`${APP_BE_URL}/api/ebooks/verify/${transaction._id}`)
-          .build();
+    try {
+      const request = StandardCheckoutPayRequest.builder()
+        .merchantOrderId(transaction.transactionId)
+        .amount(transaction.amount)
+        .redirectUrl(`${APP_BE_URL}/api/ebooks/verify/${transaction._id}`)
+        .build();
 
-        const response = await client.pay(request);
-        const checkoutPageUrl = response?.redirectUrl;
+      const response = await client.pay(request);
+      const checkoutPageUrl = response?.redirectUrl;
 
-        if (!checkoutPageUrl) {
-          throw new Error("Failed to retrieve checkout page URL.");
-        }
+      if (!checkoutPageUrl) {
+        throw new Error("Failed to retrieve checkout page URL.");
+      }
 
-        return res.status(200).json({
+      return res
+        .setHeader("Referrer-Policy", "origin-when-cross-origin")
+        .status(200)
+        .json({
           success: true,
           paymentUrl: checkoutPageUrl,
           transaction,
         });
-      } catch (error) {
-        console.error("Error during payment initiation:", error);
-        return res.status(500).json({
-          success: false,
-          message: "Error initiating payment.",
-          error: error.message,
-        });
-      }
-    }
-    // else if (test === "v2") {
-    //   if (expires_at === null || expires_at * 1000 <= Date.now()) {
-    //     const UAT_HOST_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox";
-    //     const PROD_HOST_URL = "https://api.phonepe.com/apis/identity-manager";
-    //     const PHONE_PE_HOST_URL = PROD_HOST_URL; // Use UAT for testing
-    //     const TOKEN_ENDPOINT = "/v1/oauth/token";
-    //     const response = await axios.post(
-    //       `${PHONE_PE_HOST_URL}${TOKEN_ENDPOINT}`,
-    //       {
-    //         client_id: CLIENT_ID,
-    //         client_version: CLIENT_VERSION,
-    //         client_secret: CLIENT_SECRET,
-    //         grant_type: "client_credentials",
-    //       },
-    //       {
-    //         headers: {
-    //           "Content-Type": "application/x-www-form-urlencoded",
-    //         },
-    //       }
-    //     );
-    //     expires_at = response.data.expires_at; // Set the token expiry time
-    //     access_token = response.data.access_token; // Store the access token
-    //   }
-
-    // }
-    else {
-      try {
-        const payload = {
-          merchantId: PHONEPE_MERCHANT_ID,
-          merchantTransactionId: transaction.transactionId,
-          merchantUserId: userId || "guest",
-          amount: transaction.amount,
-          redirectUrl: `${APP_BE_URL}/api/ebooks/verify/${transaction._id}`,
-          redirectMode: "REDIRECT",
-          paymentInstrument: {
-            type: "PAY_PAGE",
-          },
-        };
-
-        console.log("Payload:", payload);
-        console.log("Payload String:", JSON.stringify(payload));
-        const payloadString = JSON.stringify(payload);
-        const checksumString =
-          Buffer.from(payloadString).toString("base64") +
-          "/pg/v1/pay" +
-          PHONEPE_MERCHANT_KEY;
-        console.log("Checksum String:", checksumString);
-        const checksum =
-          crypto.createHash("sha256").update(checksumString).digest("hex") +
-          "###" +
-          PHONEPE_SALT_INDEX; // Use the correct salt index
-        console.log("Checksum:", checksum);
-
-        const response = await axios.post(
-          `${PHONEPE_BASE_URL}${ENDPOINT}`,
-          { request: Buffer.from(payloadString).toString("base64") },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "X-VERIFY": checksum,
-              accept: "application/json",
-            },
-          }
-        );
-
-        if (response.data.success) {
-          res.status(200).json({
-            success: true,
-            paymentUrl: response.data.data.instrumentResponse.redirectInfo.url,
-            transaction,
-          });
-        } else {
-          throw new Error(
-            response.data.message || "Payment initiation failed."
-          );
-        }
-      } catch (error) {
-        console.error("Error during payment initiation:", error.response);
-        res.status(500).json({
-          success: false,
-          message: "Error initiating payment.",
-          error: error.message,
-        });
-      }
+    } catch (error) {
+      console.error("Error during payment initiation:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Error initiating payment.",
+        error: error.message,
+      });
     }
   } catch (error) {
     console.log(error);
@@ -577,81 +457,30 @@ exports.verifyPayment = async (req, res) => {
         message: "Transaction not found.",
       });
     }
-
-    if (PHONEPE_ENVIRONMENT === "PROD") {
-      const response = await client.getOrderStatus(transaction.transactionId);
-      const state = response?.state;
-      console.log("State:", state);
-      if (state === "COMPLETED") {
-        transaction.status = "Success";
-        await transaction.save();
-        const user = await User.findById(transaction.userId);
-        if (user) {
-          user.purchases.ebooks.push({
-            ebookId: transaction.ebookId,
-            transactionId: transaction.transactionId,
-          });
-          await user.save();
-        }
-        return res.redirect(`${APP_FE_URL}/?success=true`);
-      } else {
-        if (state === "FAILED") {
-          transaction.status = "Failed";
-          await transaction.save();
-        }
-        return res.redirect(`${APP_FE_URL}/?success=false`);
-      }
-    }
-    // Non-production environment (e.g., sandbox)
-    else {
-      const statusUrl = `${PHONEPE_BASE_URL}/pg/v1/status/${PHONEPE_MERCHANT_ID}/${transaction.transactionId}`;
-      const checksumString =
-        `/pg/v1/status/${PHONEPE_MERCHANT_ID}/${transaction.transactionId}` +
-        PHONEPE_MERCHANT_KEY;
-      const checksum =
-        crypto.createHash("sha256").update(checksumString).digest("hex") +
-        "###" +
-        PHONEPE_SALT_INDEX; // Use the correct salt index
-
-      const response = await axios.get(statusUrl, {
-        headers: {
-          "Content-Type": "application/json",
-          "X-VERIFY": checksum,
-          accept: "application/json",
-        },
-      });
-
-      if (response.data && response.data.code === "PAYMENT_SUCCESS") {
-        transaction.status = "Success";
-        await transaction.save();
-
-        const user = await User.findById(transaction.userId);
+    const response = await client.getOrderStatus(transaction.transactionId);
+    const state = response?.state;
+    console.log("State:", state);
+    if (state === "COMPLETED") {
+      transaction.status = "Success";
+      await transaction.save();
+      const user = await User.findById(transaction.userId);
+      if (user) {
         user.purchases.ebooks.push({
           ebookId: transaction.ebookId,
           transactionId: transaction.transactionId,
         });
-
         await user.save();
-        res.redirect(`${APP_FE_URL}/?success=true`);
-      } else {
+      }
+      return res.redirect(`${APP_FE_URL}/?success=true`);
+    } else {
+      if (state === "FAILED") {
         transaction.status = "Failed";
         await transaction.save();
-        res.redirect(`${APP_FE_URL}/?success=false`);
       }
+      return res.redirect(`${APP_FE_URL}/?success=false`);
     }
   } catch (error) {
     console.error("Error verifying payment:", error);
     res.redirect(`${APP_FE_URL}/?success=false`);
   }
 };
-
-// const {
-//   APP_BE_URL,
-//   PHONEPE_MERCHANT_ID,
-//   PHONEPE_MERCHANT_KEY,
-//   PHONEPE_SALT_INDEX,
-// } = process.env;
-
-// const sha256 = (string) => {
-//   return crypto.createHash("sha256").update(string).digest("hex");
-// };
