@@ -23,7 +23,7 @@ const CLIENT_VERSION = Number(process.env.CLIENT_VERSION);
 const clientId = CLIENT_ID;
 const clientSecret = CLIENT_SECRET;
 const clientVersion = CLIENT_VERSION;
-const env = Env.PRODUCTION;
+const env = Env.SANDBOX;
 
 // console.log("Client ID:", CLIENT_ID);
 // console.log("Client Secret:", CLIENT_SECRET);
@@ -414,6 +414,10 @@ console.log("Mercant key:", PHONEPE_MERCHANT_KEY);
 
 const ENDPOINT = "/pg/v1/pay";
 
+// test = "v2"; // Set to "v2" for testing
+let expires_at = null; // Initialize token expiry variable
+let access_token = null; // Initialize access token variable
+
 // Create Ebook Order with PhonePe Integration
 exports.createEbookOrder = async (req, res) => {
   const { ebookId } = req.body;
@@ -465,7 +469,33 @@ exports.createEbookOrder = async (req, res) => {
           error: error.message,
         });
       }
-    } else {
+    }
+    // else if (test === "v2") {
+    //   if (expires_at === null || expires_at * 1000 <= Date.now()) {
+    //     const UAT_HOST_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox";
+    //     const PROD_HOST_URL = "https://api.phonepe.com/apis/identity-manager";
+    //     const PHONE_PE_HOST_URL = PROD_HOST_URL; // Use UAT for testing
+    //     const TOKEN_ENDPOINT = "/v1/oauth/token";
+    //     const response = await axios.post(
+    //       `${PHONE_PE_HOST_URL}${TOKEN_ENDPOINT}`,
+    //       {
+    //         client_id: CLIENT_ID,
+    //         client_version: CLIENT_VERSION,
+    //         client_secret: CLIENT_SECRET,
+    //         grant_type: "client_credentials",
+    //       },
+    //       {
+    //         headers: {
+    //           "Content-Type": "application/x-www-form-urlencoded",
+    //         },
+    //       }
+    //     );
+    //     expires_at = response.data.expires_at; // Set the token expiry time
+    //     access_token = response.data.access_token; // Store the access token
+    //   }
+
+    // }
+    else {
       try {
         const payload = {
           merchantId: PHONEPE_MERCHANT_ID,
