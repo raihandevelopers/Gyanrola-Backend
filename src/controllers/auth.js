@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Withdrawal = require("../models/Withdrawal");
-
+// d
 const minimum_redemption_value = 500;
 
 // Register
