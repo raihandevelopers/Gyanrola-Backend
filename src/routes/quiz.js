@@ -2,11 +2,12 @@ const express = require("express");
 const {
   createQuiz,
   getQuizzes,
+  getAllQuizzes, // Import Quizzes without filter
   deleteQuiz,
   getQuizById,
   updateQuiz,
   createQuizOrder,
-  verifyPayment, // Import the new function
+  verifyPayment,
 } = require("../controllers/quiz"); // Import deleteQuiz
 const authMiddleware = require("../middleware/auth");
 
@@ -17,6 +18,7 @@ router.post("/", authMiddleware, createQuiz);
 
 // Get All Quizzes
 router.get("/", getQuizzes);
+router.get("/all", getAllQuizzes); // Get all quizzes without filter
 router.get("/:id", getQuizById);
 
 // Delete Quiz

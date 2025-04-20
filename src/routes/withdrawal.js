@@ -9,10 +9,21 @@ router.post("/request", authMiddleware, withdrawalController.requestWithdrawal);
 // Fetch all withdrawal requests (admin only)
 router.get("/", authMiddleware, withdrawalController.getWithdrawals);
 
+// Fetch all withdrawal requests for a user
+router.get("/user", authMiddleware, withdrawalController.getUserWithdrawals);
+
 // Accept a withdrawal request (admin only)
-router.put("/:id/accept", authMiddleware, withdrawalController.acceptWithdrawal);
+router.put(
+  "/:id/accept",
+  authMiddleware,
+  withdrawalController.acceptWithdrawal
+);
 
 // Reject a withdrawal request (admin only)
-router.put("/:id/reject", authMiddleware, withdrawalController.rejectWithdrawal);
+router.put(
+  "/:id/reject",
+  authMiddleware,
+  withdrawalController.rejectWithdrawal
+);
 
 module.exports = router;

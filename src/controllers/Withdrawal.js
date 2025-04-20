@@ -29,11 +29,25 @@ exports.requestWithdrawal = async (req, res) => {
   }
 };
 
+exports.getUserWithdrawals = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log("Fetching all withdrawal requests for user:", userId);
+    const withdrawals = await Withdrawal.find({ userId }) // Filter by userId
+      .populate("userId", "name email") // Populate userId with name and email
+      .select("userId amount createdAt status"); // Include status in the response
+    console.log("Withdrawals:", withdrawals);
+    res.json(withdrawals);
+  } catch (err) {
+    console.error("Error fetching withdrawals:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 // Fetch all withdrawal requests
 exports.getWithdrawals = async (req, res) => {
   try {
-    console.log("Fetching all withdrawal requests...");
-    const withdrawals = await Withdrawal.find() // Remove the status filter
+    const withdrawals = await Withdrawal.find() // Filter by userId
       .populate("userId", "name email") // Populate userId with name and email
       .select("userId amount createdAt status"); // Include status in the response
     console.log("Withdrawals:", withdrawals);

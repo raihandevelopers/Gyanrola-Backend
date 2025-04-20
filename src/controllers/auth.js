@@ -39,7 +39,17 @@ exports.register = async (req, res) => {
       password: hashedPassword,
       referredBy,
     }); // Include referredBy
+
     await user.save();
+    // Add 50 rs to user wallet for successful referral
+    if (referredBy) {
+      const referrer = await User.findById(referredBy);
+      if (referrer) {
+        referrer.wallet += 50; // Add 50 rs to referrer's wallet
+
+        await referrer.save();
+      }
+    }
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -73,10 +83,51 @@ exports.login = async (req, res) => {
   }
 };
 
+exports.getUserById = async (req, res) => {
+  const userId = req.params.id; // Get user ID from request parameters
+  try {
+    const user = await User.findById(userId); // Include wallet field
+    const userReferrals = await User.find(
+      { referredBy: userId },
+      { email: 1, name: 1, _id: 0 }
+    );
+    res.json({ user, userReferrals });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// Admin Login
+exports.adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: "User not found" });
+    if (user.role !== "admin")
+      return res.status(403).json({
+        error: "Access denied! You need to be an admin to perform this action.",
+      });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+    res.json({ token });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 exports.getUsers = async (req, res) => {
   try {
     // Fetch all users (only email and name)
-    const users = await User.find({}, { email: 1, name: 1, wallet: 1, _id: 0 });
+    const users = await User.find(
+      {},
+      { email: 1, name: 1, wallet: 1, referredBy: 1 }
+    );
     res.json(users);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -124,5 +175,19 @@ exports.redeem = async (req, res) => {
     res.json({ message: "Withdrawal request submitted", withdrawal });
   } catch (error) {
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+exports.getUserReferrals = async (req, res) => {
+  try {
+    const userId = req.user.id; // Assuming req.user.id contains the ID of the logged-in user
+    // Find all users referred by this user
+    const referrals = await User.find(
+      { referredBy: userId },
+      { email: 1, name: 1, _id: 0 }
+    );
+    res.json(referrals);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };

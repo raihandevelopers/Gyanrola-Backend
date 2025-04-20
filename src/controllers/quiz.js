@@ -73,6 +73,20 @@ const createQuiz = async (req, res) => {
   }
 };
 
+// Get All Quizzes (Not filtered by date)
+const getAllQuizzes = async (req, res) => {
+  try {
+    const quizzes = await Quiz.find()
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("createdBy", "email");
+
+    res.json(quizzes);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
 // Get All Quizzes
 const getQuizzes = async (req, res) => {
   try {
@@ -312,6 +326,7 @@ const verifyPayment = async (req, res) => {
 module.exports = {
   createQuiz,
   getQuizzes,
+  getAllQuizzes,
   deleteQuiz,
   getQuizById,
   updateQuiz,
