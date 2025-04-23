@@ -76,7 +76,7 @@ const createQuiz = async (req, res) => {
 // Get All Quizzes (Not filtered by date)
 const getAllQuizzes = async (req, res) => {
   try {
-    const quizzes = await Quiz.find()
+    const quizzes = await Quiz.find({}, { questions: 0 })
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("createdBy", "email");
@@ -109,6 +109,19 @@ const getQuizzes = async (req, res) => {
 // Get Quiz by ID
 const getQuizById = async (req, res) => {
   try {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (
+      !user ||
+      !user.purchases.quizzes.find((quiz) => quiz.quizId == req.params.id)
+    ) {
+      return res.status(403).json({
+        error: user
+          ? "You haven't purchased the quiz yet"
+          : "User not authenticated",
+      });
+    }
+    // Check if the quiz exists and is not expired
     const quiz = await Quiz.findById(req.params.id)
       .populate("category", "name")
       .populate("subcategory", "name")

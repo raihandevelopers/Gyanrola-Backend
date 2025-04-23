@@ -19,7 +19,7 @@ router.post("/", authMiddleware, createQuiz);
 // Get All Quizzes
 router.get("/", getQuizzes);
 router.get("/all", getAllQuizzes); // Get all quizzes without filter
-router.get("/:id", getQuizById);
+router.get("/:id", authMiddleware, getQuizById);
 
 // Delete Quiz
 router.delete("/:id", authMiddleware, deleteQuiz); // Add delete route

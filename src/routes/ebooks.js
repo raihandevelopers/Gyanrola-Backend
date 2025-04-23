@@ -13,6 +13,7 @@ const {
   getEbookCoverImage,
   createEbookOrder,
   verifyPayment,
+  getRecentEbooks,
 } = require("../controllers/Ebooks");
 const authMiddleware = require("../middleware/auth");
 
@@ -50,6 +51,9 @@ router.post("/", authMiddleware, upload.single("pdfFile"), uploadEbook);
 
 // Read - Get all ebooks
 router.get("/", getAllEbooks);
+
+// Get recently uploaded ebooks
+router.get("/recent", getRecentEbooks);
 
 // Read - Get single ebook
 router.get("/:id", getEbookById);

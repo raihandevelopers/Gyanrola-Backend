@@ -190,6 +190,30 @@ exports.getEbookById = async (req, res) => {
   }
 };
 
+// Get recently uploaded ebooks
+exports.getRecentEbooks = async (req, res) => {
+  try {
+    const limit = Number.isInteger(parseInt(req.query.limit))
+      ? parseInt(req.query.limit)
+      : 3; // Validate limit or default to 3
+    const recentEbooks = await Ebook.find()
+      .sort({ _id: -1 }) // Sort by most recent
+      .limit(limit)
+      .select("-filepath"); // Exclude file path from response
+
+    res.status(200).json({
+      success: true,
+      count: recentEbooks.length,
+      data: recentEbooks,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 // Update ebook
 exports.updateEbook = async (req, res) => {
   try {
@@ -471,13 +495,17 @@ exports.verifyPayment = async (req, res) => {
         });
         await user.save();
       }
-      return res.redirect(`${APP_FE_URL}/?success=true`);
+      return res.redirect(
+        `${APP_FE_URL}/books/${transaction.ebookId}/?success=true`
+      );
     } else {
       if (state === "FAILED") {
         transaction.status = "Failed";
         await transaction.save();
       }
-      return res.redirect(`${APP_FE_URL}/?success=false`);
+      return res.redirect(
+        `${APP_FE_URL}/books/${transaction.ebookId}/?success=false`
+      );
     }
   } catch (error) {
     console.error("Error verifying payment:", error);
