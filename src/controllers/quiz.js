@@ -237,16 +237,12 @@ const getQuizById = async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId);
-    if (
-      !user ||
-      !user.purchases.quizzes.find((quiz) => quiz.quizId == req.params.id)
-    ) {
+    if (!user) {
       return res.status(403).json({
-        error: user
-          ? "You haven't purchased the quiz yet"
-          : "User not authenticated",
+        error: "User not authenticated",
       });
     }
+
     // Check if the quiz exists and is not expired
     const quiz = await Quiz.findById(req.params.id)
       .populate("category", "name")
@@ -262,6 +258,14 @@ const getQuizById = async (req, res) => {
       return res.status(404).json({ error: "Quiz not started yet" });
     }
 
+    if (
+      quiz.isFree === false &&
+      !user.purchases.quizzes.find((quiz) => quiz.quizId == req.params.id)
+    ) {
+      return res.status(403).json({
+        error: "Quiz not purchased",
+      });
+    }
     res.json(quiz);
   } catch (err) {
     res.status(400).json({ error: err.message });
