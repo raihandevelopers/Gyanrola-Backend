@@ -73,6 +73,132 @@ const createQuiz = async (req, res) => {
   }
 };
 
+// Create Multiple Quizzes
+const createMultipleQuizzes = async (req, res) => {
+  const quizzes = req.body.quizzes;
+
+  if (!Array.isArray(quizzes) || quizzes.length === 0) {
+    return res.status(400).json({ error: "Invalid or empty quizzes array." });
+  }
+
+  const session = await Quiz.startSession();
+  session.startTransaction();
+
+  try {
+    // Pre-fetch all categories and subcategories to minimize DB calls
+    const categoryIds = [...new Set(quizzes.map((q) => q.category))];
+    const subcategoryIds = [...new Set(quizzes.map((q) => q.subcategory))];
+
+    const categories = await Category.find({ _id: { $in: categoryIds } });
+    const subcategories = await Subcategory.find({
+      _id: { $in: subcategoryIds },
+    });
+
+    const categoryMap = new Map(
+      categories.map((cat) => [cat._id.toString(), cat])
+    );
+    const subcategoryMap = new Map(
+      subcategories.map((sub) => [sub._id.toString(), sub])
+    );
+
+    const quizDocs = [];
+    const errors = [];
+
+    for (const quizData of quizzes) {
+      const {
+        title,
+        description,
+        category,
+        subcategory,
+        questions,
+        isFree,
+        startDate,
+        endDate,
+        price,
+      } = quizData;
+
+      // Validate required fields
+      if (
+        !title ||
+        !category ||
+        !subcategory ||
+        !questions ||
+        !startDate ||
+        !endDate
+      ) {
+        errors.push({ quiz: quizData, error: "Missing required fields." });
+        continue;
+      }
+
+      // Validate category
+      if (!categoryMap.has(category)) {
+        errors.push({
+          quiz: quizData,
+          error: `Category not found: ${category}`,
+        });
+        continue;
+      }
+
+      // Validate subcategory
+      if (!subcategoryMap.has(subcategory)) {
+        errors.push({
+          quiz: quizData,
+          error: `Subcategory not found: ${subcategory}`,
+        });
+        continue;
+      }
+
+      // Validate price for paid quizzes
+      if (isFree === false && (!price || price <= 0)) {
+        errors.push({
+          quiz: quizData,
+          error: "Price must be specified and greater than 0 for paid quizzes.",
+        });
+        continue;
+      }
+
+      // Build quiz document
+      quizDocs.push({
+        title,
+        description,
+        category,
+        subcategory,
+        questions,
+        startDate,
+        endDate,
+        createdBy: req.user.id,
+        isFree: isFree || false,
+        ...(isFree ? {} : { price }),
+      });
+    }
+
+    if (quizDocs.length === 0 || errors.length > 0) {
+      await session.abortTransaction();
+      session.endSession();
+      return res
+        .status(400)
+        .json({ error: "Invalid quizdata present.", details: errors });
+    }
+
+    // Batch insert all valid quizzes
+    const createdQuizzes = await Quiz.insertMany(quizDocs, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({
+      message: "Quizzes created successfully.",
+      quizzes: createdQuizzes,
+      errors, // Include errors for invalid quizzes
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    throw err;
+  } finally {
+    session.endSession();
+  }
+};
+
 // Get All Quizzes (Not filtered by date)
 const getAllQuizzes = async (req, res) => {
   try {
@@ -134,6 +260,24 @@ const getQuizById = async (req, res) => {
 
     if (quiz.startDate > currentDate) {
       return res.status(404).json({ error: "Quiz not started yet" });
+    }
+
+    res.json(quiz);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+const getQuizByIdAdmin = async (req, res) => {
+  try {
+    // Check if the quiz exists
+    const quiz = await Quiz.findById(req.params.id)
+      .populate("category", "name")
+      .populate("subcategory", "name")
+      .populate("createdBy", "email");
+
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
     }
 
     res.json(quiz);
@@ -345,4 +489,6 @@ module.exports = {
   updateQuiz,
   createQuizOrder,
   verifyPayment,
+  getQuizByIdAdmin,
+  createMultipleQuizzes,
 };

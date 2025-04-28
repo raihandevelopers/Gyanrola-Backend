@@ -8,8 +8,11 @@ const {
   updateQuiz,
   createQuizOrder,
   verifyPayment,
+  getQuizByIdAdmin,
+  createMultipleQuizzes, // Import createMultipleQuizzes
 } = require("../controllers/quiz"); // Import deleteQuiz
 const authMiddleware = require("../middleware/auth");
+const adminMiddleware = require("../middleware/isAdmin");
 
 const router = express.Router();
 
@@ -20,6 +23,7 @@ router.post("/", authMiddleware, createQuiz);
 router.get("/", getQuizzes);
 router.get("/all", getAllQuizzes); // Get all quizzes without filter
 router.get("/:id", authMiddleware, getQuizById);
+router.get("/getQuiz/:id", authMiddleware, adminMiddleware, getQuizByIdAdmin); // Get quiz by ID
 
 // Delete Quiz
 router.delete("/:id", authMiddleware, deleteQuiz); // Add delete route
@@ -31,5 +35,8 @@ router.post("/order", authMiddleware, createQuizOrder);
 
 // Verify Order Payment
 router.get("/verify/:id", verifyPayment);
+
+// Create Multiple Quizzes
+router.post("/bulk", authMiddleware, createMultipleQuizzes);
 
 module.exports = router;
