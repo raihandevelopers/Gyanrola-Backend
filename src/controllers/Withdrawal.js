@@ -35,6 +35,7 @@ exports.getUserWithdrawals = async (req, res) => {
     console.log("Fetching all withdrawal requests for user:", userId);
     const withdrawals = await Withdrawal.find({ userId }) // Filter by userId
       .populate("userId", "name email") // Populate userId with name and email
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .select("userId amount createdAt status"); // Include status in the response
     console.log("Withdrawals:", withdrawals);
     res.json(withdrawals);
@@ -48,7 +49,8 @@ exports.getUserWithdrawals = async (req, res) => {
 exports.getWithdrawals = async (req, res) => {
   try {
     const withdrawals = await Withdrawal.find() // Filter by userId
-      .populate("userId", "name email") // Populate userId with name and email
+      .populate("userId", "name email wallet") // Populate userId with name and email
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .select("userId amount createdAt status"); // Include status in the response
     console.log("Withdrawals:", withdrawals);
     res.json(withdrawals);
