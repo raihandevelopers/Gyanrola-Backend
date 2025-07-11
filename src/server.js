@@ -20,6 +20,7 @@ const allowedOrigins = [
   "https://quiz-user-frontend.vercel.app",
   "https://playquizcontest.com",
   "https://gyaaneralo.com",
+  "https://www.gyaaneralo.com", // Added for CORS support
   "https://gyanrola.vercel.app",
   "http://localhost:5173", // For Local Admin Development
 ];
