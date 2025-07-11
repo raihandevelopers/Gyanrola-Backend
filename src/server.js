@@ -65,5 +65,5 @@ app.use("/api/blogs", require("./routes/blogs"));
 app.use("/api/transactions", require("./routes/transaction"));
 app.use("/api/carousel", require("./routes/carousel"));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4500;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
