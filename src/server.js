@@ -9,6 +9,17 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+// Open CORS for all origins
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {
