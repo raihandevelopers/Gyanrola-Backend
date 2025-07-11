@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const cors = require("cors");
 
 dotenv.config();
 
@@ -9,40 +8,6 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-
-// Configure CORS
-const allowedOrigins = [
-  "https://quiz-admin-fe.vercel.app", // Production frontend
-  "http://localhost:5000", // Local development frontend
-  "https://quiz-contest-gamma.vercel.app", // Production frontend V2
-  "http://localhost:5173",
-  "https://quiz-admin-fe-nj3j.vercel.app",
-  "https://quiz-user-frontend.vercel.app",
-  "https://playquizcontest.com",
-  "https://gyaaneralo.com",
-  "https://www.gyaaneralo.com", // Added for CORS support
-  "https://gyanrola.vercel.app",
-  "http://localhost:5173", // For Local Admin Development
-];
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-
-      // Check if the origin is in the allowed list
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: "GET,POST,PUT,DELETE", // Allowed HTTP methods
-    credentials: true, // Allow cookies and credentials
-    allowedHeaders: ["Content-Type", "Authorization"], // Allowed HTTP headers
-  })
-);
 
 // Connect to MongoDB
 mongoose
