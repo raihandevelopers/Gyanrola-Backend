@@ -13,8 +13,6 @@ const quizSchema = new mongoose.Schema({
     ref: "Subcategory",
     required: true,
   },
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true },
   questions: [
     {
       question: { type: String, required: true },

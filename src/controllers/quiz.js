@@ -35,8 +35,7 @@ const createQuiz = async (req, res) => {
     subcategory,
     questions,
     isFree,
-    startDate,
-    endDate,
+    price
   } = req.body;
 
   try {
@@ -58,12 +57,10 @@ const createQuiz = async (req, res) => {
       description,
       category,
       subcategory,
-      startDate,
-      endDate,
       questions,
       createdBy: req.user.id,
       isFree: isFree || false, // Default to false if not provided
-      ...(isFree ? {} : { price: req.body.price }), // Include price only if not free
+      ...(isFree ? {} : { price }), // Include price only if not free
     });
 
     await quiz.save();
@@ -112,8 +109,6 @@ const createMultipleQuizzes = async (req, res) => {
         subcategory,
         questions,
         isFree,
-        startDate,
-        endDate,
         price,
       } = quizData;
 
@@ -122,9 +117,7 @@ const createMultipleQuizzes = async (req, res) => {
         !title ||
         !category ||
         !subcategory ||
-        !questions ||
-        !startDate ||
-        !endDate
+        !questions
       ) {
         errors.push({ quiz: quizData, error: "Missing required fields." });
         continue;
@@ -164,8 +157,6 @@ const createMultipleQuizzes = async (req, res) => {
         category,
         subcategory,
         questions,
-        startDate,
-        endDate,
         createdBy: req.user.id,
         isFree: isFree || false,
         ...(isFree ? {} : { price }),
@@ -220,13 +211,7 @@ const getQuizzes = async (req, res) => {
       .populate("category", "name")
       .populate("subcategory", "name")
       .populate("createdBy", "email");
-
-    const quizNotExpired = quizzes.filter((quiz) => {
-      const currentDate = new Date();
-      return quiz.endDate > currentDate; // Filter out quizzes that have already ended
-    });
-
-    res.json(quizNotExpired);
+    res.json(quizzes);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -249,13 +234,8 @@ const getQuizById = async (req, res) => {
       .populate("subcategory", "name")
       .populate("createdBy", "email");
 
-    const currentDate = new Date();
-    if (!quiz || quiz.endDate <= currentDate) {
-      return res.status(404).json({ error: "Quiz not found or has expired" });
-    }
-
-    if (quiz.startDate > currentDate) {
-      return res.status(404).json({ error: "Quiz not started yet" });
+    if (!quiz) {
+      return res.status(404).json({ error: "Quiz not found" });
     }
 
     if (
@@ -313,8 +293,7 @@ const updateQuiz = async (req, res) => {
     subcategory,
     questions,
     isFree,
-    startDate,
-    endDate,
+    price,
   } = req.body;
 
   try {
@@ -339,10 +318,8 @@ const updateQuiz = async (req, res) => {
         category,
         subcategory,
         questions,
-        startDate,
-        endDate,
         isFree: isFree || false, // Default to false if not provided
-        ...(isFree ? {} : { price: req.body.price }), // Include price only if not free
+        ...(isFree ? {} : { price }), // Include price only if not free
       },
       { new: true }
     );
